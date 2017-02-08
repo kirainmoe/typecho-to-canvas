@@ -8,6 +8,8 @@
  * @link https://github.com/kirainmoe
  */
 
+ini_set('timezone', 'Asia/Shanghai');
+
 // environment check
 if (php_sapi_name() != 'cli') {
   echo 'Converter can only run in php-cli mode.';
@@ -15,13 +17,12 @@ if (php_sapi_name() != 'cli') {
 }
 
 // import dependencies
-try {
-  include dirname(__FILE__) . '/lib/medoo.php';
-  include dirname(__FILE__) . '/lib/Parsedown.php';
-} catch(Exception $e) {
-  echo 'Converter could not find core dependencies.';
+if (!file_exists('./vendor')) {
+  echo "\033[31mIt seems that you haven't run \033[30mcomposer install\033[31m to install dependencies yet.\033[0m";
   exit;
 }
+
+require './vendor/autoload.php';
 
 $typecho = array();
 $canvas  = array();
@@ -33,36 +34,70 @@ This is a conventer that helps you easily convent your data from Typecho to Canv
 
 sleep(1);
 
-echo "\033[33m[1/4] Collecting database config for Typecho:\033[0m\n\n";
-
 /**
  * Step 1/4
  * Collect databse config for Typecho
  */
-echo "Typecho database host (127.0.0.1): ";
-$server = trim(fgets(STDIN));
-$typecho['server'] = empty($server) ? '127.0.0.1' : $server;
+echo "\033[33m[1/4] Collecting database config for Typecho:\033[0m\n\n";
 
-echo "Typecho database user (root): ";
-$username = trim(fgets(STDIN));
-$typecho['username'] = empty($username) ? 'root' : $username;
+if (file_exists('./config.inc.php')) {
+  echo "Typecho database config file detected! Will read configs from \033[30mconfig.inc.php\033[0m automatically.\n";
 
-echo "Typecho database password: ";
-$typecho['password'] = trim(fgets(STDIN));
+  $file = file_get_contents('./config.inc.php');
+  preg_match_all('/[\'|\"](.*)[\'|\"]\s*=>\s*[\'|\"](.*)[\'|\"]/', $file, $res);
 
-echo "Typecho database name (typecho): ";
-$dbname = trim(fgets(STDIN));
-$typecho['database_name'] = empty($dbname) ? 'typecho' : $dbname;
+  $attrMaps = array(
+    'host' => 'server',
+    'user' => 'username',
+    'password' => 'password',
+    'port' => 'port',
+    'database' => 'database_name',
+    'charset' => 'charset'
+  );
+  foreach ($res[1] as $key => $val)
+    $typecho[$attrMaps[$val]] = $res[2][$key];
 
-echo "Typecho database port (3306): ";
-$port = trim(fgets(STDIN));
-$typecho['port'] = empty($port) ? 3306 : $port;
+  preg_match('/Typecho_Db\([\'|\"](.*)[\'|\"],.*\)/', $file, $res);
+  switch (strtolower($res[1]))
+  {
+    case 'mysql':
+    case 'pdo_mysql':
+    default:
+      $typecho['database_type'] = 'mysql';
+      break;
+    case 'pdo_sqlite':
+      $typecho['database_type'] = 'sqlite';
+      break;
+    case 'pdo_pgsql':
+      $typecho['database_type'] = 'postgresql';
+      break;
+  }
+} else {
+  echo "Typecho database host (127.0.0.1): ";
+  $server = trim(fgets(STDIN));
+  $typecho['server'] = empty($server) ? '127.0.0.1' : $server;
 
-echo "Typecho database type [mysql, sqlite, postgresql]: ";
-$type = trim(fgets(STDIN));
-$typecho['database_type'] = empty($type) ? 'mysql' : $type;
+  echo "Typecho database user (root): ";
+  $username = trim(fgets(STDIN));
+  $typecho['username'] = empty($username) ? 'root' : $username;
 
-$typecho['charset'] = 'utf8';
+  echo "Typecho database password: ";
+  $typecho['password'] = trim(fgets(STDIN));
+
+  echo "Typecho database name (typecho): ";
+  $dbname = trim(fgets(STDIN));
+  $typecho['database_name'] = empty($dbname) ? 'typecho' : $dbname;
+
+  echo "Typecho database port (3306): ";
+  $port = trim(fgets(STDIN));
+  $typecho['port'] = empty($port) ? 3306 : $port;
+
+  echo "Typecho database type [mysql(default), sqlite, postgresql]: ";
+  $type = trim(fgets(STDIN));
+  $typecho['database_type'] = empty($type) ? 'mysql' : $type;
+
+  $typecho['charset'] = 'utf8';
+}
 
 sleep(1);
 
@@ -73,10 +108,10 @@ sleep(1);
 echo "\n\n\033[33m[2/4] Collecting database config for Canvas:\033[0m\n\n";
 
 while (true) {
-  echo "Do you have Typecho and Canvas installed at the same database server? (y/n)";
+  echo "Do you have Typecho and Canvas installed at the same database server? (Y/n)";
   $isAtTheSameDb = strtolower(trim(fgets(STDIN)));
 
-  if ($isAtTheSameDb == 'y') {
+  if ($isAtTheSameDb != 'n') {
     $canvas = $typecho;
 
     echo "Canvas database name (canvas): ";
@@ -84,7 +119,7 @@ while (true) {
     $canvas['database_name'] = empty($dbname) ? 'canvas' : $dbname;
 
     break;
-  } else if ($isAtTheSameDb == 'n') {
+  } else {
     echo "Canvas database host (127.0.0.1): ";
     $server = trim(fgets(STDIN));
     $canvas['server'] = empty($server) ? '127.0.0.1' : $server;
@@ -110,8 +145,6 @@ while (true) {
 
     $canvas['charset'] = 'utf8';
     break;
-  } else {
-    echo "Input is illegal.\n";
   }
 }
 
@@ -121,18 +154,22 @@ print_r($typecho);
 echo "\nCanvas database config: ";
 print_r($canvas);
 
-echo "\nIs this OK? (y/n)";
+echo "\n  Is this OK? (Y/n)";
 $isThisOK = strtolower(trim(fgets(STDIN)));
-if ($isThisOK != 'y') {
+if ($isThisOK == 'n') {
   echo '  Oops! Please restart the converter and repeat the operation above.';
   exit;
 }
 
 sleep(1);
 
-echo "\n\033[33m[3/4] Copying data... \033[0m\n\n";
-echo "  Please wait since this process can take a while.\n\n";
+/**
+ * Step 3/4
+ * Performing magic...
+ */
+echo "\n\033[33m[3/4] Performing magic... \033[0m\n\n";
 
+// serialize database instance
 try {
   $te = new medoo($typecho);
   $cn = new medoo($canvas);
@@ -141,10 +178,32 @@ try {
   exit;
 }
 
+echo "  Do you want to keep current data of Canvas? (Y/n): ";
+$isKeepingData = strtolower(trim(fgets(STDIN)));
+if ($isKeepingData == 'n') {
+  echo "  \033[31mBe cautious! All your posts and tags of Canvas will lost!\033[0m
+  Really want to abandon all the data? (y/N)";
+  $isAbandon = strtolower(trim(fgets(STDIN)));
+
+  if ($isAbandon == 'y') {
+    // truncate is not allowed for posts and tags that referenced in a foreign key
+    $cn->query('DELETE FROM `canvas_posts`');
+    $cn->query('DELETE FROM `canvas_tags`');
+    $cn->query('TRUNCATE TABLE `canvas_post_tag`');
+    echo "  Operation successfully finished.\n\n";
+  }
+}
+
+echo "  Please wait since this operation can take a while.\n\n";
+
+// typecho_metas ===> canvas_tags
 echo "\033[35m  Converting metas(tags)...\033[0m\n    ";
 $rawTags = $te->select('typecho_metas', '*', array('type' => 'tag'));
 $teTags = array();
 $cnTags = array();
+/**
+ * typecho_meta_id ====> meta_slug ====> canvas_tag_id
+ */
 foreach ($rawTags as $val)
 {
   $teTags[$val['mid']] = $val['slug'];
@@ -163,6 +222,7 @@ foreach ($rawTags as $val)
 }
 echo "done!\n";
 
+// typecho_contents ===> canvas_posts
 echo "\033[35m  Copying posts...\033[0m\n    ";
 $rawPosts = $te->select('typecho_contents', '*', array(
   'type' => array('post', 'page')
@@ -193,6 +253,7 @@ foreach ($rawPosts as $val)
 }
 echo "done!\n";
 
+// typecho_relationships ===> canvas_post_tag
 echo "\033[35m  Mapping posts to tags...\033[0m\n    ";
 foreach ($cnPostsMap as $key => $value)
 {
@@ -214,11 +275,14 @@ foreach ($cnPostsMap as $key => $value)
 }
 echo "done!\n";
 
-echo "\033[35m  Synchronizing settings...\033[0m\n";
-
 sleep(1);
 
+/**
+ * Step 4/4
+ * Congratulations!
+ */
 echo "\n\033[33m[4/4] Congratulations! \033[0m\n\n";
-echo "You have successfully converted from Typecho to Canvas! Enjoy~\n";
-echo "If you have any further issues, please refer to https://github.com/kirainmoe/typecho-to-canvas.\n";
-echo "Copyright(c) 2017 kirainmoe | https://kirainmoe.com";
+echo "\033[32m  You have successfully converted from Typecho to Canvas! Enjoy~\033[0m\n";
+echo "  Run \033[31mphp artisan serve\033[0m on Canvas root directory and check if it works.\n";
+echo "  If you have any further issues, please refer to https://github.com/kirainmoe/typecho-to-canvas.\n";
+echo "  Converter by kirainmoe | https://kirainmoe.com | GNU GPLv2";

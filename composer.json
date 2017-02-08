@@ -1,0 +1,17 @@
+{
+    "name": "kirainmoe/typecho-to-canvas",
+    "description": "Easily converting data from Typecho to Canvas blog platform.",
+    "type": "plugin",
+    "require": {
+        "catfan/medoo": "^1.1",
+        "erusev/parsedown": "^1.6"
+    },
+    "license": "GPLv2",
+    "authors": [
+        {
+            "name": "kirainmoe",
+            "email": "i@kirainmoe.com"
+        }
+    ],
+    "minimum-stability": "beta"
+}
