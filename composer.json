@@ -13,5 +13,6 @@
             "email": "i@kirainmoe.com"
         }
     ],
-    "minimum-stability": "beta"
+    "minimum-stability": "beta",
+    "bin": ["te2cn"]
 }
