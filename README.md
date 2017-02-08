@@ -26,32 +26,64 @@ Easily convert your blog data from Typecho to Canvas blog platform.
 ### Install via Git and convert
 
  - Clone this repository.
+ 
  ```shell
  $ git clone https://github.com/kirainmoe/typecho-to-canvas
  $ cd typecho-to-canvas
  ```
+ 
  - Install dependencies. You must have composer worked normally.
+ 
  ```shell
  $ composer install
  ```
+ 
  - Run **te2cn**, which lies on the root directory of this repository.
+ 
  ```shell
  $ php te2cn
  ```
+ 
  - Follow the instruction and fill in the config.
  - Enjoy Canvas!
+ 
+### Install via Composer and convert
+
+ - Run composer global require.
+ 
+ ```shell
+ $ composer global require kirainmoe/typecho-to-canvas
+ ```
+ 
+ - Run **te2cn**, follow the instruction and fill in the config.
+ 
+ ```shell
+ $ te2cn
+ ```
+ 
+ - Enjoy Canvas!
+ 
+#### PS: You can copy Typecho's config file *config.inc.php* to the root directory of this project, *te2cn* will detece and parse the config automatically.
 
 # Q&A
 
 Q: How can I know what caused my failure of converting data?
+
 A: After checking your local environment (eg.permission, database), you can open an issue to tell us the trouble you are facing. We will help you with it.
 
+---
+
 Q: I don't use **Typecho** but I use **Wordpress**, how can I export my data?
+
 A: You may consider [this](https://github.com/magnetion/wordpress-to-canvas) or using [typecho2wordpress](https://github.com/panxianhai/typecho2wordpress) first before exporting data to Canvas.
 
 # Compatibility
 
 *te2cn* worked perfectly on Typecho 1.0(14.10.10) and Canvas(3.1.0).
+
+# Todo
+
+- Reverse converting (Canvas to Typecho)
 
 # Contribute
 
