@@ -52,7 +52,7 @@ Easily convert your blog data from Typecho to Canvas blog platform.
  - Run composer global require.
  
  ```shell
- $ composer global require kirainmoe/typecho-to-canvas
+ $ composer global require kirainmoe/typecho-to-canvas:dev-master
  ```
  
  - Run **te2cn**, follow the instruction and fill in the config.
