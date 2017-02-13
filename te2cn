@@ -174,8 +174,8 @@ echo "\n\033[33m[3/4] Performing magic... \033[0m\n\n";
 
 // serialize database instance
 try {
-  $te = new medoo($typecho);
-  $cn = new medoo($canvas);
+  $te = new \Medoo\Medoo($typecho);
+  $cn = new \Medoo\Medoo($canvas);
 } catch (Exception $e) {
   echo "\033[31m  Oops! Can not connect to database. Failed to execute operation. Aborting...\033[0m";
   exit;
@@ -219,7 +219,7 @@ foreach ($rawTags as $val)
     'reverse_direction' => 0,
     'created_at' => date('Y-m-d H:i:s'),
     'updated_at' => date('Y-m-d H:i:s')
-  ));
+  ))->id();
   $cnTags[$val['slug']] = $cnTagId;
   echo '.';
 }
@@ -249,7 +249,7 @@ foreach ($rawPosts as $val)
     'created_at' => date('Y-m-d H:i:s', $val['created']),
     'updated_at' => date('Y-m-d H:i:s', $val['modified']),
     'published_at' => date('Y-m-d H:i:s', $val['created'])
-  ));
+  ))->id();
 
   $cnPostsMap[$val['cid']] = $cnPostId;
   echo '.';
