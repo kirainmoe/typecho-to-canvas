@@ -219,7 +219,8 @@ foreach ($rawTags as $val)
     'reverse_direction' => 0,
     'created_at' => date('Y-m-d H:i:s'),
     'updated_at' => date('Y-m-d H:i:s')
-  ))->id();
+  ));
+  $cnTagId = $cn->id();
   $cnTags[$val['slug']] = $cnTagId;
   echo '.';
 }
@@ -235,7 +236,7 @@ $cnPostsMap = array();
 foreach ($rawPosts as $val)
 {
   $parsedContent = $parsedown->text(str_replace('<!--markdown-->', '', $val['text']));
-  $cnPostId = $cn->insert('canvas_posts', array(
+  $cn->insert('canvas_posts', array(
     'user_id' => 1,     // webmaster for default author
     'slug' => $val['slug'],
     'title' => $val['title'],
@@ -244,13 +245,13 @@ foreach ($rawPosts as $val)
     'content_html' => $parsedContent,
     'page_image' => '',
     'meta_description' => '',
-    'is_draft' => ($val['status'] == 'publish' ? 0 : 1),
+    'is_published' => ($val['status'] == 'publish' ? 1 : 0),
     'layout' => 'canvas::frontend.blog.post',
     'created_at' => date('Y-m-d H:i:s', $val['created']),
     'updated_at' => date('Y-m-d H:i:s', $val['modified']),
     'published_at' => date('Y-m-d H:i:s', $val['created'])
-  ))->id();
-
+  ));
+  $cnPostId = $cn->id();
   $cnPostsMap[$val['cid']] = $cnPostId;
   echo '.';
 }
